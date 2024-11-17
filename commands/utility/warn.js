@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder } = require('discord.js');
 const fs = require('node:fs');
+const path = require('path');
 const filePath = require(path.join(__dirname, '../../config.json')).warnFilePath;
 
 module.exports = {
@@ -32,18 +33,18 @@ module.exports = {
         const admin = interaction.guild.members.cache.get(adminID);
         const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
         if (adminRoles.size === 0) {
-            await interaction.editReply({ content: '이 명령어는 Staff 이상의 권한이 필요합니다.', ephemeral: true });
+            await interaction.editReply('이 명령어는 Staff 이상의 권한이 필요합니다.');
             return;
         }
         const targetUser = interaction.options.getUser('이름');
         const userNameData = await interaction.guild.members.fetch(targetUser.id);
         if (targetUser.bot) {
-            await interaction.editReply({ content: '올바른 서버 멤버가 아닙니다.', ephemeral: true });
+            await interaction.editReply('올바른 서버 멤버가 아닙니다.');
             return;
         }
         for (const item of allRoleIDs) {
             if (userNameData.roles.cache.has(item)) {
-                await interaction.editReply({ content: '관리자는 대상으로 지정할 수 없습니다.', ephemeral: true });
+                await interaction.editReply('관리자는 대상으로 지정할 수 없습니다.');
                 return;
             }
         }
@@ -104,7 +105,7 @@ module.exports = {
             )
             await channel.send({ embeds: [saEmbed] });
         }
-        await interaction.editReply({ content: `${userNick}에게 경고 ${number}개를 부여했습니다. 현재 해당 멤버의 경고 개수는 ${finalWarn}개입니다.${whetherBan}`, ephemeral: true });
+        await interaction.editReply(`${userNick}에게 경고 ${number}개를 부여했습니다. 현재 해당 멤버의 경고 개수는 ${finalWarn}개입니다.${whetherBan}`);
         try {
             await targetUser.send(`<@${userID}> "${warnReason}" 사유로 경고 ${number}개를 부여받았습니다. 현재 ${userNick}님의 경고 갯수는 ${finalWarn}개 입니다.`); 
         } catch (error) {

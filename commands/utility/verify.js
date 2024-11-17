@@ -18,7 +18,7 @@ module.exports = {
                 .setRequired(true)),
     async execute(interaction) {
         if (interaction.channelId != '1230838052944085003' && interaction.channelId != '1242036383955025970') {
-            await interaction.editReply({ content: '이 명령어는 <#1230838052944085003>에서만 사용하실 수 있습니다.', ephemeral: true });
+            await interaction.editReply('이 명령어는 <#1230838052944085003>에서만 사용하실 수 있습니다.');
             return;
         }
         const name = interaction.options.getString('name');

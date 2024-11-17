@@ -14,10 +14,11 @@ const { EmbedBuilder } = require('discord.js');
 const cron = require('node-cron');
 const fs = require('node:fs');
 const path = require('node:path');
-const { token } = require(path.join(__dirname, './config.json'));
+const config = require(path.join(__dirname, './config.json'));
+const token = config.token;
 const filePath = path.join(__dirname, config.userDataFilePath);
-const SCHEDULE_FILE = path.join(__dirname, config.scheduleFilePath);
-const TIMEOUT_FILE = path.join(__dirname, config.timeoutFilePath);
+const SCHEDULE_FILE = path.join(__dirname, config.scheduleIndex);
+const TIMEOUT_FILE = path.join(__dirname, config.timeoutIndex);
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -125,7 +126,7 @@ function loadUserData() {
         const userDataMap = new Map(Object.entries(jsonData));
         return userDataMap;
     } catch (error) {
-        logErrorNonInt(error);
+        indexError(error, "loading verify data")
         return new Map();
     }
 }
@@ -160,14 +161,10 @@ async function verifyNotice() {
         });
         fs.writeFileSync('userData.json', JSON.stringify(Object.fromEntries(userData)));
     } catch (error) {
-		console.error(`${error.name} occured in verifyNotice`);
-		const timestamp = getTimestamp();
-		const logFileName = `logs/error_verifyNotice_${timestamp}.log`;
-		const errorLog = `${error.stack || 'No stack trace available'}`;
-		fs.promises.writeFile(logFileName, errorLog, 'utf8');
+        indexError(error, "verifyNotice")
     }
 }
-// ***** 뮤트/해방 함수 *****
+// ***** 뒤주/해방 함수 *****
 function loadSchedules() {
     try {
         if (fs.existsSync(SCHEDULE_FILE)) {
@@ -212,7 +209,7 @@ async function unmute(task) {
             case 10007:
                 return;
             default:
-                logErrorNonInt(error);
+                indexError(error, "auto-unmute")
                 break;
         }
     }
@@ -257,6 +254,14 @@ async function logError(error, interaction) {
     const timestamp = getTimestamp();
     const logFileName = `logs/error_${scriptName}_${error.code}_${timestamp}.log`;
     const errorLog = `${errorMsg}\n${error.stack || 'No stack trace available'}`;
+    fs.promises.writeFile(logFileName, errorLog, 'utf8');
+}
+
+async function indexError(error, msg) {
+    console.error(`${error.name} occured in ${msg}`);
+    const timestamp = getTimestamp();
+    const logFileName = `logs/error_${msg}_${timestamp}.log`;
+    const errorLog = `${error.stack || 'No stack trace available'}`;
     fs.promises.writeFile(logFileName, errorLog, 'utf8');
 }
 

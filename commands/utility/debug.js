@@ -21,7 +21,7 @@ module.exports = {
         const user = interaction.guild.members.cache.get(userID);
         const channel = interaction.channel; // 명령어가 실행된 채널
         if (channel != "1242036383955025970") {
-            await interaction.editReply({ content: `어허 그런거 막 쓰는 거 아닙니다 ^^`, ephemeral: true });
+            await interaction.editReply(`어허 그런거 막 쓰는 거 아닙니다 ^^`);
             return
         } else {
             await interaction.reply(interaction.options.getString('category'));

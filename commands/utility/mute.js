@@ -2,8 +2,9 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder } = require('discord.js');
 const fs = require('node:fs');
 const path = require('path');
-const SCHEDULE_FILE = path.join(__dirname, './data/schedule.json');
-const TIMEOUT_FILE = path.join(__dirname, './data/timeouts.json');
+const config = require(path.join(__dirname, '../../config.json'));
+const SCHEDULE_FILE = path.join(__dirname, config.scheduleFilePath);
+const TIMEOUT_FILE = path.join(__dirname, config.timeoutFilePath);
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
@@ -41,23 +42,23 @@ module.exports = {
         const admin = interaction.guild.members.cache.get(adminID);
         const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
         if (adminRoles.size === 0) {
-            await interaction.editReply({ content: '이 명령어는 Staff 이상의 권한이 필요합니다.', ephemeral: true });
+            await interaction.editReply('이 명령어는 Staff 이상의 권한이 필요합니다.');
             return;
         }
         const targetUser = interaction.options.getUser('이름');
         const userNameData = await interaction.guild.members.fetch(targetUser.id);
         if (targetUser.bot) {
-            await interaction.editReply({ content: '올바른 서버 멤버가 아닙니다.', ephemeral: true });
+            await interaction.editReply('올바른 서버 멤버가 아닙니다.');
             return;
         }
         for (const item of allRoleIDs) {
             if (userNameData.roles.cache.has(item)) {
-                await interaction.editReply({ content: '관리자는 대상으로 지정할 수 없습니다.', ephemeral: true });
+                await interaction.editReply('관리자는 대상으로 지정할 수 없습니다.');
                 return;
             }
         }
         if (userNameData.roles.cache.has('1220326194231119974')) {
-            await interaction.editReply({ content: '해당 유저는 이미 활동 정지 상태입니다.', ephemeral: true });
+            await interaction.editReply('해당 유저는 이미 활동 정지 상태입니다.');
             return;
         }
         const userID = targetUser.id;
@@ -95,7 +96,7 @@ module.exports = {
             { name: '만료', value: `<t:${muteEnd}:R>`, inline: true },
         )
         await channel.send({ embeds: [saEmbed] });
-        await interaction.editReply({ content: `${userNick}에게 활동 정지를 부여했습니다.`, ephemeral: true });
+        await interaction.editReply(`${userNick}에게 활동 정지를 부여했습니다.`);
         try {
             await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지를 부여받았습니다.`); 
         } catch (error) {
