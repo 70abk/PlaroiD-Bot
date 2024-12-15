@@ -93,7 +93,7 @@ module.exports = {
                     await interaction.editReply(`해당 역할이 이미 부여되어 있습니다!`);
                 }
             } else {
-                await interaction.reply(`해당 플레이어는 다른 디스코드 아이디에 연결되어 있습니다!\n부계정을 사용하고 있거나 하이픽셀에 연동된 디스코드 아이디가 일치하는지 확인해주세요.\n만일 부득이한 경우라면 <@Hystats>의 /general name:닉네임 명령어를 사용한 뒤 사유를 작성해주세요.`);
+                await interaction.reply(`해당 플레이어는 다른 디스코드 아이디에 연결되어 있습니다!\n부계정을 사용하고 있거나 하이픽셀에 연동된 디스코드 아이디가 일치하는지 확인해주세요.\n만일 부득이한 경우라면 <@718827787422793820>의 /general name:닉네임 명령어를 사용한 뒤 사유를 작성해주세요.`);
             }
         } catch (error) {
             throw error;
