@@ -17,9 +17,10 @@ module.exports = {
                 return input.charAt(0) !== '#' ? `#${input}` : input;
             })();
             if (!boolHEX(HEX)) {
-                await interaction.editReply(`올바른 HEX 코드를 입력해주세요.`);
+                await interaction.reply(`올바른 HEX 코드를 입력해주세요.`);
                 return;
             }
+            await interaction.deferReply();
             const roleName = `${userID}_color`;
             const colRole = await getRoleByName(interaction.guild, roleName);
             if (colRole) {

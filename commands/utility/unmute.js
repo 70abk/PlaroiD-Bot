@@ -18,7 +18,7 @@ module.exports = {
         .addStringOption(option =>
             option.setName('사유')
                 .setDescription('활동 정지를 해제한 이유')
-                .setRequired(true)),
+                .setRequired(false)),
 
     async execute(interaction) {
         const allRoleIDs = [
@@ -30,25 +30,26 @@ module.exports = {
         const admin = interaction.guild.members.cache.get(adminID);
         const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
         if (adminRoles.size === 0) {
-            await interaction.editReply('이 명령어는 Staff 이상의 권한이 필요합니다.');
+            await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
             return;
         }
         const targetUser = interaction.options.getUser('이름');
         const userNameData = await interaction.guild.members.fetch(targetUser.id);
         if (targetUser.bot) {
-            await interaction.editReply('올바른 서버 멤버가 아닙니다.');
+            await interaction.ereply('올바른 서버 멤버가 아닙니다.');
             return;
         }
         for (const item of allRoleIDs) {
             if (userNameData.roles.cache.has(item)) {
-                await interaction.editReply('관리자는 대상으로 지정할 수 없습니다.');
+                await interaction.reply('관리자는 대상으로 지정할 수 없습니다.');
                 return;
             }
         }
         if (!userNameData.roles.cache.has('1220326194231119974')) {
-            await interaction.editReply('해당 유저는 활동 정지 상태가 아닙니다.');
+            await interaction.rReply('해당 유저는 활동 정지 상태가 아닙니다.');
             return;
         }
+        await interaction.deferReply();
         const userID = targetUser.id;
         const userNick = targetUser.globalName;
         const muteReason = interaction.options.getString('사유') || '없음';

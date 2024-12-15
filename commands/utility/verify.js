@@ -18,7 +18,7 @@ module.exports = {
                 .setRequired(true)),
     async execute(interaction) {
         if (interaction.channelId != '1230838052944085003' && interaction.channelId != '1242036383955025970') {
-            await interaction.editReply('이 명령어는 <#1230838052944085003>에서만 사용하실 수 있습니다.');
+            await interaction.reply('이 명령어는 <#1230838052944085003>에서만 사용하실 수 있습니다.');
             return;
         }
         const name = interaction.options.getString('name');
@@ -31,18 +31,19 @@ module.exports = {
                 const mjres = await axios.get(MojangApiUrl);
                 var playerUUID = mjres.data.id;
             } catch (innerError) {
-                await interaction.editReply(`플레이어 "${name}" 를 찾을 수 없습니다.`);
+                await interaction.reply(`플레이어 "${name}" 를 찾을 수 없습니다.`);
                 return;
             }
             const HypixelApiUrl = `https://api.hypixel.net/player?key=${HypixelApiKey}&uuid=${playerUUID}`;
             const response = await axios.get(HypixelApiUrl);
             const playerData = response.data.player;
             if (!playerData) {
-                await interaction.editReply(`플레이어 "${name}"은 하이픽셀 유저가 아닙니다.`);
+                await interaction.reply(`플레이어 "${name}"은 하이픽셀 유저가 아닙니다.`);
                 return;
             }
             const playerDiscordName = playerData.socialMedia?.links?.DISCORD;
             if (playerDiscordName == username || playerDiscordName == undefined) {
+                await interaction.deferReply();
                 const exp = playerData.networkExp;
                 const level = calculate(exp);
                 let userRoleID;
@@ -92,7 +93,7 @@ module.exports = {
                     await interaction.editReply(`해당 역할이 이미 부여되어 있습니다!`);
                 }
             } else {
-                await interaction.editReply(`해당 플레이어는 다른 디스코드 아이디에 연결되어 있습니다!\n부계정을 사용하고 있거나 하이픽셀에 연동된 디스코드 아이디가 일치하는지 확인해주세요.\n만일 부득이한 경우라면 <@Hystats>의 /general name:닉네임 명령어를 사용한 뒤 사유를 작성해주세요.`);
+                await interaction.reply(`해당 플레이어는 다른 디스코드 아이디에 연결되어 있습니다!\n부계정을 사용하고 있거나 하이픽셀에 연동된 디스코드 아이디가 일치하는지 확인해주세요.\n만일 부득이한 경우라면 <@Hystats>의 /general name:닉네임 명령어를 사용한 뒤 사유를 작성해주세요.`);
             }
         } catch (error) {
             throw error;
