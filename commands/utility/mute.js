@@ -111,10 +111,10 @@ module.exports = {
         }
     },
 };
-function loadSchedules() {
+async function loadSchedules() {
     try {
-        if (fs.existsSync(SCHEDULE_FILE)) {
-            const data = fs.promises.readFile(SCHEDULE_FILE, 'utf8');
+        if (await fs.promises.exists(SCHEDULE_FILE)) {
+            const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
             return [];
@@ -158,7 +158,7 @@ async function unmute(task) {
         }
     }
 }
-function scheduleTask(task) {
+async function scheduleTask(task) {
     const currentTime = Math.floor(Date.now()/1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
@@ -166,14 +166,14 @@ function scheduleTask(task) {
         const tID = setTimeout(async () => {
             await unmute(task);
             const schedules = loadSchedules().filter(s => s.id !== task.id);
-            fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
+            await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
-        fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
+        await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
         const schedules = loadSchedules().filter(s => s.id !== task.id);
-        fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
-        unmute(task);
+        await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
+        await unmute(task);
     }
 }
 function loadTimeout() {

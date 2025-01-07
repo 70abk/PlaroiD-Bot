@@ -61,18 +61,11 @@ for (const folder of commandFolders) {
 }
 
 // 봇 실행시 작동할 코드
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify({}, null, 2), 'utf8');
-    const schedules = loadSchedules();
+    const schedules = await loadSchedules();
     schedules.forEach(scheduleTask);
-    cron.schedule('0 21 * * *', () => {
-        console.log('작업 수행');
-        verifyNotice();
-    }, {
-        scheduled: true,
-        timezone: "Asia/Seoul"
-    });
 });
 
 //명령어 실행 코드
@@ -106,6 +99,19 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // 서버에 사람이 들어올 시 실행할 코드
 client.on('guildMemberAdd', async member => {
+    return;
+});
+
+// 인증 시스템 공지 함수(Unused)
+/*
+    cron.schedule('0 21 * * *', () => {
+        console.log('작업 수행');
+        verifyNotice();
+    }, {
+        scheduled: true,
+        timezone: "Asia/Seoul"
+    });
+
     const roleId = '1250084959637602375';
     const role = member.guild.roles.cache.get(roleId);
     try {
@@ -115,9 +121,7 @@ client.on('guildMemberAdd', async member => {
     } catch (error) {
         console.error(`Failed to add role ${role.name} to ${member.user.tag}:`, error);
     }
-});
-
-// 인증 시스템 공지 함수
+    
 function loadUserData() {
     try {
         const data = fs.readFileSync(filePath, 'utf8');
@@ -163,11 +167,12 @@ async function verifyNotice() {
         indexError(error, "verifyNotice")
     }
 }
+*/
 // ***** 뒤주/해방 함수 *****
-function loadSchedules() {
+async function loadSchedules() {
     try {
-        if (fs.existsSync(SCHEDULE_FILE)) {
-            const data = fs.readFileSync(SCHEDULE_FILE, 'utf8');
+        if (await fs.promises.exists(SCHEDULE_FILE)) {
+            const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
             return [];
@@ -214,21 +219,22 @@ async function unmute(task) {
     }
 }
 
-function scheduleTask(task) {
-    const currentTime = Math.floor(Date.now() / 1000);
+async function scheduleTask(task) {
+    const currentTime = Math.floor(Date.now()/1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
+        const timeoutMap = loadTimeout();
         const tID = setTimeout(async () => {
             await unmute(task);
             const schedules = loadSchedules().filter(s => s.id !== task.id);
-            fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
+            await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
-        fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
+        await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
         const schedules = loadSchedules().filter(s => s.id !== task.id);
-        fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
-        unmute(task);
+        await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
+        await unmute(task);
     }
 }
 
@@ -245,11 +251,9 @@ async function logError(error, interaction) {
         errorMsg += ` 오류 코드: ${error.code}`;
     } 
 	console.error(`"${cmdname}" 명령어 실행 중 ${error.name} 오류가 발생했습니다!`);
-    if (interaction.replied) {
+    if (interaction.replied || interaction.deferred) {
         await interaction.followUp({ content: errorMsg, ephemeral: true });
-    } else {
-		interaction.editReply({ content: errorMsg, ephemeral: true })
-	}
+    }
     const timestamp = getTimestamp();
     const logFileName = `logs/error_${scriptName}_${error.code}_${timestamp}.log`;
     const errorLog = `${errorMsg}\n${error.stack || 'No stack trace available'}`;

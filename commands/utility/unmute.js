@@ -89,10 +89,10 @@ module.exports = {
         }
     },
 };
-function loadSchedules() {
+async function loadSchedules() {
     try {
-        if (fs.existsSync(SCHEDULE_FILE)) {
-            const data = fs.promises.readFile(SCHEDULE_FILE, 'utf8');
+        if (await fs.promises.exists(SCHEDULE_FILE)) {
+            const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
             return [];
