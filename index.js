@@ -16,7 +16,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const config = require(path.join(__dirname, './config.json'));
 const token = config.token;
-const filePath = path.join(__dirname, config.userDataFilePath);
 const SCHEDULE_FILE = path.join(__dirname, config.scheduleIndex);
 const TIMEOUT_FILE = path.join(__dirname, config.timeoutIndex);
 const client = new Client({
@@ -33,9 +32,6 @@ if (!fs.existsSync('logs')) {
 }
 if (!fs.existsSync('data')) {
 	fs.mkdirSync('data');
-}
-if (!fs.existsSync(filePath)) {
-	fs.writeFileSync(filePath, '{}', 'utf8');
 }
 if (!fs.existsSync(SCHEDULE_FILE)) {
 	fs.writeFileSync(SCHEDULE_FILE, '[]', 'utf8');
@@ -102,72 +98,6 @@ client.on('guildMemberAdd', async member => {
     return;
 });
 
-// 인증 시스템 공지 함수(Unused)
-/*
-    cron.schedule('0 21 * * *', () => {
-        console.log('작업 수행');
-        verifyNotice();
-    }, {
-        scheduled: true,
-        timezone: "Asia/Seoul"
-    });
-
-    const roleId = '1250084959637602375';
-    const role = member.guild.roles.cache.get(roleId);
-    try {
-        if (!member.roles.cache.has("1250084959637602375") && member.bot) {
-            await member.roles.add(role);
-        }
-    } catch (error) {
-        console.error(`Failed to add role ${role.name} to ${member.user.tag}:`, error);
-    }
-    
-function loadUserData() {
-    try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        const jsonData = JSON.parse(data);
-        const userDataMap = new Map(Object.entries(jsonData));
-        return userDataMap;
-    } catch (error) {
-        indexError(error, "loading verify data")
-        return new Map();
-    }
-}
-
-async function verifyNotice() {
-    try {
-        const guild = client.guilds.cache.get('1152211578834386984');
-        const role = guild.roles.cache.get('1250084959637602375');
-        const channel = client.channels.cache.get('1230838052944085003');
-        await guild.members.fetch();
-        const memberIds = guild.members.cache
-            .filter(member => member.roles.cache.has(role.id))
-            .map(member => member.user.id);
-        const userData = loadUserData();
-        for (const id of memberIds) {
-            let meDate = userData.get(id) || 0;
-            if (meDate >= 30) {
-                userData.delete(id);
-                const member = await guild.members.fetch(id);
-                await member.kick('장기간 미인증');
-            } else if (meDate >= 21 || meDate == 14 || meDate == 7) {
-                await channel.send(`<@${id}> ${meDate}일동안 인증을 진행하지 않으셨습니다. 30일 이상 인증을 진행하지 않을 경우 서버에서 추방될 수 있습니다.`);
-            }
-            userData.set(id, ++meDate);
-        }
-        const serverMemberIds = new Set(guild.members.cache.map(member => member.user.id));
-        userData.forEach((_value, userId) => {
-            if (!serverMemberIds.has(userId)) {
-                userData.delete(userId);
-                console.log(`Deleted data for user ${userId} as they no longer exist in the server.`);
-            }
-        });
-        fs.writeFileSync('userData.json', JSON.stringify(Object.fromEntries(userData)));
-    } catch (error) {
-        indexError(error, "verifyNotice")
-    }
-}
-*/
 // ***** 뒤주/해방 함수 *****
 async function loadSchedules() {
     try {

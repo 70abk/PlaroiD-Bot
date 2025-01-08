@@ -36,7 +36,7 @@ module.exports = {
         const targetUser = interaction.options.getUser('이름');
         const userNameData = await interaction.guild.members.fetch(targetUser.id);
         if (targetUser.bot) {
-            await interaction.ereply('올바른 서버 멤버가 아닙니다.');
+            await interaction.reply('올바른 서버 멤버가 아닙니다.');
             return;
         }
         for (const item of allRoleIDs) {
