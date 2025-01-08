@@ -11,13 +11,11 @@ TIMEOUT_FILE - 해방시 취소할 뒤주 목록 저장파일 경로 (timeouts.j
 */
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
-const cron = require('node-cron');
 const fs = require('node:fs');
 const path = require('node:path');
 const config = require(path.join(__dirname, './config.json'));
 const token = config.token;
-const SCHEDULE_FILE = path.join(__dirname, config.scheduleIndex);
-const TIMEOUT_FILE = path.join(__dirname, config.timeoutIndex);
+const dataPath = path.join(__dirname, config.dataPathIndex);
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -26,6 +24,7 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
     ]
 });
+
 // fs 경로 설정
 if (!fs.existsSync('logs')) {
 	fs.mkdirSync('logs');
@@ -33,8 +32,8 @@ if (!fs.existsSync('logs')) {
 if (!fs.existsSync('data')) {
 	fs.mkdirSync('data');
 }
-if (!fs.existsSync(SCHEDULE_FILE)) {
-	fs.writeFileSync(SCHEDULE_FILE, '[]', 'utf8');
+if (!fs.existsSync(dataPath)) {
+	fs.writeFileSync(SCHEDULE_FILE, '{}', 'utf8');
 }
 
 // 명령어 불러오기
@@ -61,7 +60,9 @@ client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify({}, null, 2), 'utf8');
     const schedules = await loadSchedules();
-    schedules.forEach(scheduleTask);
+    for (const task of schedules) {
+        await schedulesTask(task)
+    }
 });
 
 //명령어 실행 코드
@@ -93,15 +94,16 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
-// 서버에 사람이 들어올 시 실행할 코드
+// 서버에 사람이 들어올 시 실행할 코드(Unused)
+/*
 client.on('guildMemberAdd', async member => {
     return;
 });
-
+*/
 // ***** 뒤주/해방 함수 *****
 async function loadSchedules() {
     try {
-        if (await fs.promises.exists(SCHEDULE_FILE)) {
+        if (await fs.promises.access(SCHEDULE_FILE)) {
             const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
@@ -114,7 +116,7 @@ async function loadSchedules() {
 
 async function unmute(task) {
     try {
-        const guild = client.guilds.cache.get('1152211578834386984');
+        const guild = client.guilds.cache.get(task.guildId);
         const userID = task.userId;
         const member = await guild.members.fetch(userID);
         await member.roles.remove("1220326194231119974");
