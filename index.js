@@ -61,7 +61,9 @@ client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify({}, null, 2), 'utf8');
     const schedules = await loadSchedules();
-    schedules.forEach(scheduleTask);
+    for (const task of schedules) {
+        await scheduleTask(task);
+    }
 });
 
 //명령어 실행 코드
@@ -101,7 +103,7 @@ client.on('guildMemberAdd', async member => {
 // ***** 뒤주/해방 함수 *****
 async function loadSchedules() {
     try {
-        if (await fs.promises.exists(SCHEDULE_FILE)) {
+        if (fs.existsSync(SCHEDULE_FILE)) {
             const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
@@ -156,13 +158,13 @@ async function scheduleTask(task) {
         const timeoutMap = loadTimeout();
         const tID = setTimeout(async () => {
             await unmute(task);
-            const schedules = loadSchedules().filter(s => s.id !== task.id);
+            const schedules = await loadSchedules().filter(s => s.id !== task.id);
             await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
         await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
-        const schedules = loadSchedules().filter(s => s.id !== task.id);
+        const schedules = await loadSchedules().filter(s => s.id !== task.id);
         await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
         await unmute(task);
     }

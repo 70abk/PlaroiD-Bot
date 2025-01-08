@@ -57,7 +57,7 @@ module.exports = {
         const mutedTime = Math.floor(Date.now() / 1000);
         const channel = interaction.guild.channels.cache.get('1228984653994659931');
         const schedules = loadSchedules();
-        scheduleTask(schedules)
+        await scheduleTask(schedules)
         await userNameData.roles.remove('1220326194231119974');
         const unmuteEmbed = new EmbedBuilder()
         .setColor('#ffd400')
@@ -91,7 +91,7 @@ module.exports = {
 };
 async function loadSchedules() {
     try {
-        if (await fs.promises.exists(SCHEDULE_FILE)) {
+        if (fs.existsSync(SCHEDULE_FILE)) {
             const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {

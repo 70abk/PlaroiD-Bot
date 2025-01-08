@@ -79,7 +79,7 @@ module.exports = {
         schedules.push(newSchedule);
         fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
         await userNameData.roles.add('1220326194231119974');
-        scheduleTask(newSchedule);
+        await scheduleTask(newSchedule);
         const saEmbed = new EmbedBuilder()
         .setColor('#330804')
         .setTitle('활동 정지')
@@ -113,7 +113,7 @@ module.exports = {
 };
 async function loadSchedules() {
     try {
-        if (await fs.promises.exists(SCHEDULE_FILE)) {
+        if (fs.existsSync(SCHEDULE_FILE)) {
             const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
@@ -165,17 +165,18 @@ async function scheduleTask(task) {
         const timeoutMap = loadTimeout();
         const tID = setTimeout(async () => {
             await unmute(task);
-            const schedules = loadSchedules().filter(s => s.id !== task.id);
+            const schedules = await loadSchedules().filter(s => s.id !== task.id);
             await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
         await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
-        const schedules = loadSchedules().filter(s => s.id !== task.id);
+        const schedules = await loadSchedules().filter(s => s.id !== task.id);
         await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
         await unmute(task);
     }
 }
+
 function loadTimeout() {
     try {
         const data = JSON.parse(fs.promises.readFile(TIMEOUT_FILE, 'utf8'));
