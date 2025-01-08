@@ -103,7 +103,7 @@ client.on('guildMemberAdd', async member => {
 // ***** 뒤주/해방 함수 *****
 async function loadSchedules() {
     try {
-        if (fs.existsSync(SCHEDULE_FILE)) {
+        if (await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)) {
             const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
             return JSON.parse(data);
         } else {
