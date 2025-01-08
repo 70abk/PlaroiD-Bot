@@ -113,13 +113,12 @@ module.exports = {
 };
 async function loadSchedules() {
     try {
-        if (await fs.promises.exists(SCHEDULE_FILE)) {
-            const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
-            return JSON.parse(data);
-        } else {
-            return [];
-        }
+        await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)
+        const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
+        console.log(data)
+        return JSON.parse(data);
     } catch (error) {
+        console.error(error);
         return [];
     }
 }
@@ -165,13 +164,14 @@ async function scheduleTask(task) {
         const timeoutMap = loadTimeout();
         const tID = setTimeout(async () => {
             await unmute(task);
-            const schedules = loadSchedules().filter(s => s.id !== task.id);
+            const schedules = await loadSchedules().filter(s => s.id !== task.id);
             await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
         await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
-        const schedules = loadSchedules().filter(s => s.id !== task.id);
+        const b4schedules = await loadSchedules()
+        const schedules = b4schedules.filter(s => s.id !== task.id);
         await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
         await unmute(task);
     }
