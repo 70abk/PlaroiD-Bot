@@ -106,7 +106,8 @@ async function scheduleTask(task) {
     const timeoutKey = timeoutMap.get(userID);
     clearTimeout(timeoutKey);
     timeoutMap.delete(userID);
-    const schedules = loadSchedules().filter(s => s.id !== task.id);
+    const b4schedules = await loadSchedules()
+    const schedules = b4schedules.filter(s => s.id !== task.id);
     await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
     await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
 }
