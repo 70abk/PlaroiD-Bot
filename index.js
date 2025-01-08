@@ -105,7 +105,6 @@ async function loadSchedules() {
     try {
         await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)
         const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
-        console.log(data)
         return JSON.parse(data);
     } catch (error) {
         console.error(error);
