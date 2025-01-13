@@ -160,7 +160,7 @@ async function scheduleTask(task) {
     const currentTime = Math.floor(Date.now()/1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
-        const timeoutMap = loadTimeout();
+        const timeoutMap = await loadTimeout();
         const tID = setTimeout(async () => {
             await unmute(task);
             const schedules = await loadSchedules().filter(s => s.id !== task.id);
@@ -176,10 +176,11 @@ async function scheduleTask(task) {
     }
 }
 
-function loadTimeout() {
+async function loadTimeout() {
     try {
-        const data = JSON.parse(fs.promises.readFile(TIMEOUT_FILE, 'utf8'));
-        return new Map(Object.entries(data));
+        const data = await fs.promises.readFile(TIMEOUT_FILE, 'utf8');
+        const parsedData = JSON.parse(data)
+        return new Map(Object.entries(parsedData));
     } catch (error) {
         return new Map();
     }

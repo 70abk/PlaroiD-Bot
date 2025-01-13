@@ -46,7 +46,7 @@ module.exports = {
             }
         }
         if (!userNameData.roles.cache.has('1220326194231119974')) {
-            await interaction.rReply('해당 유저는 활동 정지 상태가 아닙니다.');
+            await interaction.reply('해당 유저는 활동 정지 상태가 아닙니다.');
             return;
         }
         await interaction.deferReply();
@@ -102,7 +102,7 @@ async function loadSchedules() {
 }
 async function scheduleTask(task) {
     const userID = task.userId;
-    const timeoutMap = loadTimeout();
+    const timeoutMap = await loadTimeout();
     const timeoutKey = timeoutMap.get(userID);
     clearTimeout(timeoutKey);
     timeoutMap.delete(userID);
@@ -111,9 +111,9 @@ async function scheduleTask(task) {
     await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
     await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
 }
-function loadTimeout() {
+async function loadTimeout() {
     try {
-        const data = fs.promises.readFile(TIMEOUT_FILE, 'utf8');
+        const data = await fs.promises.readFile(TIMEOUT_FILE, 'utf8');
         const parsedData = JSON.parse(data)
         return new Map(Object.entries(parsedData));
     } catch (error) {
