@@ -3,6 +3,7 @@ Modules
 fs - node:fs
 path - path
 cron - node-cron
+database - better-sqlite3
 /////////////////////
 Consts
 filePath - 미인증 유저 인증날짜 저장파일 경로 (userData.json)
@@ -13,6 +14,7 @@ const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
+const database = require('better-sqlite3');
 const config = require(path.join(__dirname, './config.json'));
 const token = config.token;
 const dataPath = path.join(__dirname, config.dataPathIndex);
@@ -33,7 +35,7 @@ if (!fs.existsSync('data')) {
 	fs.mkdirSync('data');
 }
 if (!fs.existsSync(dataPath)) {
-	fs.writeFileSync(SCHEDULE_FILE, '{}', 'utf8');
+	fs.writeFileSync(dataPath, '{}', 'utf8');
 }
 
 // 명령어 불러오기
