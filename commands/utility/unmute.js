@@ -56,7 +56,7 @@ module.exports = {
         const avatarURL = targetUser.displayAvatarURL();
         const mutedTime = Math.floor(Date.now() / 1000);
         const channel = interaction.guild.channels.cache.get('1228984653994659931');
-        const schedules = loadSchedules();
+        const schedules = await loadSchedules();
         await scheduleTask(schedules)
         await userNameData.roles.remove('1220326194231119974');
         const unmuteEmbed = new EmbedBuilder()

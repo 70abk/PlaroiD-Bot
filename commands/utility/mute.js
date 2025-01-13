@@ -75,7 +75,7 @@ module.exports = {
             unixTime: muteEnd,
             userId: userID
         };
-        const schedules = loadSchedules();
+        const schedules = await loadSchedules();
         schedules.push(newSchedule);
         fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
         await userNameData.roles.add('1220326194231119974');
@@ -114,8 +114,7 @@ module.exports = {
 async function loadSchedules() {
     try {
         await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)
-        const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
-        console.log(data)
+        const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');=
         return JSON.parse(data);
     } catch (error) {
         console.error(error);
