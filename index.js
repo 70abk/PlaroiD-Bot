@@ -153,7 +153,7 @@ async function scheduleTask(task) {
     const currentTime = Math.floor(Date.now()/1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
-        const timeoutMap = loadSchedules();
+        const timeoutMap = await loadSchedules();
         const tID = setTimeout(async () => {
             await unmute(task);
             const schedules = await loadSchedules().filter(s => s.id !== task.id);
