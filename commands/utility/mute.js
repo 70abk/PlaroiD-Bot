@@ -114,7 +114,7 @@ module.exports = {
 async function loadSchedules() {
     try {
         await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)
-        const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');=
+        const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
         return JSON.parse(data);
     } catch (error) {
         console.error(error);
