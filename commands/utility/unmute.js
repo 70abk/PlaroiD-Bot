@@ -21,61 +21,65 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
-        const allRoleIDs = [
-            '1152216050478350416',
-            '1220243484779352064',
-            '1286693691968192622',
-        ];
-        const adminID = interaction.user.id;
-        const admin = interaction.guild.members.cache.get(adminID);
-        const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
-        if (adminRoles.size === 0) {
-            await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
-            return;
-        }
-        const targetUser = interaction.options.getUser('이름');
-        const userNameData = await interaction.guild.members.fetch(targetUser.id);
-        if (targetUser.bot) {
-            await interaction.reply('올바른 서버 멤버가 아닙니다.');
-            return;
-        }
-        for (const item of allRoleIDs) {
-            if (userNameData.roles.cache.has(item)) {
-                await interaction.reply('관리자는 대상으로 지정할 수 없습니다.');
+        try {
+            const allRoleIDs = [
+                '1152216050478350416',
+                '1220243484779352064',
+                '1286693691968192622',
+            ];
+            const adminID = interaction.user.id;
+            const admin = interaction.guild.members.cache.get(adminID);
+            const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
+            if (adminRoles.size === 0) {
+                await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
                 return;
             }
+            const targetUser = interaction.options.getUser('이름');
+            const userNameData = await interaction.guild.members.fetch(targetUser.id);
+            if (targetUser.bot) {
+                await interaction.reply('올바른 서버 멤버가 아닙니다.');
+                return;
+            }
+            for (const item of allRoleIDs) {
+                if (userNameData.roles.cache.has(item)) {
+                    await interaction.reply('관리자는 대상으로 지정할 수 없습니다.');
+                    return;
+                }
+            }
+            if (!userNameData.roles.cache.has('1220326194231119974')) {
+                await interaction.reply('해당 유저는 활동 정지 상태가 아닙니다.');
+                return;
+            }
+            await interaction.deferReply();
+            const userID = targetUser.id;
+            const userNick = targetUser.globalName;
+            const muteReason = interaction.options.getString('사유') || '없음';
+            const avatarURL = targetUser.displayAvatarURL();
+            const mutedTime = Math.floor(Date.now() / 1000);
+            const channel = interaction.guild.channels.cache.get('1228984653994659931');
+            const schedules = await loadSchedules();
+            await scheduleTask(schedules)
+            await userNameData.roles.remove('1220326194231119974');
+            const unmuteEmbed = new EmbedBuilder()
+            .setColor('#ffd400')
+            .setTitle('활동 정지 해제')
+            .setAuthor({
+                name: `${userNick}`,
+                iconURL: `${avatarURL}`
+            })
+            .addFields(
+                { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
+                { name: '멤버', value: `<@${userID}>`, inline: true },
+                { name: '관리자', value: `<@${adminID}>`, inline: true }
+            )
+            .addFields(
+                { name: '사유', value: muteReason},
+            )
+            await channel.send({ embeds: [unmuteEmbed] });
+            await interaction.editReply(`${userNick}에게 활동 정지를 해제했습니다.`);
+        } catch (error) {
+            throw error;
         }
-        if (!userNameData.roles.cache.has('1220326194231119974')) {
-            await interaction.reply('해당 유저는 활동 정지 상태가 아닙니다.');
-            return;
-        }
-        await interaction.deferReply();
-        const userID = targetUser.id;
-        const userNick = targetUser.globalName;
-        const muteReason = interaction.options.getString('사유') || '없음';
-        const avatarURL = targetUser.displayAvatarURL();
-        const mutedTime = Math.floor(Date.now() / 1000);
-        const channel = interaction.guild.channels.cache.get('1228984653994659931');
-        const schedules = await loadSchedules();
-        await scheduleTask(schedules)
-        await userNameData.roles.remove('1220326194231119974');
-        const unmuteEmbed = new EmbedBuilder()
-        .setColor('#ffd400')
-        .setTitle('활동 정지 해제')
-        .setAuthor({
-            name: `${userNick}`,
-            iconURL: `${avatarURL}`
-        })
-        .addFields(
-            { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
-            { name: '멤버', value: `<@${userID}>`, inline: true },
-            { name: '관리자', value: `<@${adminID}>`, inline: true }
-        )
-        .addFields(
-            { name: '사유', value: muteReason},
-        )
-        await channel.send({ embeds: [unmuteEmbed] });
-        await interaction.editReply(`${userNick}에게 활동 정지를 해제했습니다.`);
         try {
             await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지가 해제되었습니다.`); 
         } catch (error) {

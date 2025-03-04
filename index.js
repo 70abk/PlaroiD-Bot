@@ -58,12 +58,17 @@ for (const folder of commandFolders) {
 
 // 봇 실행시 작동할 코드
 client.once(Events.ClientReady, async readyClient => {
-    console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-    fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify({}, null, 2), 'utf8');
-    const schedules = await loadSchedules();
-    for (const task of schedules) {
-        await scheduleTask(task);
+    try {
+        fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify({}, null, 2), 'utf8');
+        const schedules = await loadSchedules();
+        for (const task of schedules) {
+            await scheduleTask(task);
+        }
+    } catch (error) {
+        indexError(error, "ClientReady");
     }
+
+    console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
 //명령어 실행 코드
