@@ -204,3 +204,5 @@ async function indexError(error, msg) {
 }
 
 client.login(token);
+
+module.exports = client;
