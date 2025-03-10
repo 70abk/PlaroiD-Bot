@@ -118,7 +118,7 @@ async function loadSchedules() {
 }
 async function unmute(task) {
     try {
-        const guild = client.guilds.cache.get('1152211578834386984');
+        const guild = await client.guilds.fetch("1152211578834386984");
         const userID = task.userId;
         const member = await guild.members.fetch(userID);
         await member.roles.remove("1220326194231119974");

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder } = require('discord.js');
-const Client = require("../../index.js");
+const client = require("../../index.js");
 const fs = require('node:fs');
 const path = require('path');
 const config = require(path.join(__dirname, '../../config.json'));
@@ -129,7 +129,7 @@ async function loadSchedules() {
 }
 async function unmute(task) {
     try {
-        const guild = Client.guilds.cache.get("1152211578834386984");
+        const guild = await client.guilds.fetch("1152211578834386984");
         const userID = task.userId;
         const member = guild.members.cache(userID)
         const userNick = member.globalName;
