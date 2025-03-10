@@ -90,7 +90,6 @@ module.exports = {
                     try {
                         const guild = await client.guilds.fetch("1152211578834386984");
                         const member = await guild.members.fetch(newSchedule.userId);
-                        console.log(member)
                         await member.roles.remove("1220326194231119974");
                         const unmuteEmbed = new EmbedBuilder()
                             .setColor('#ffd400')
