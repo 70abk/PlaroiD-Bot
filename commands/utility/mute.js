@@ -129,7 +129,7 @@ async function loadSchedules() {
 }
 async function unmute(task) {
     try {
-        const guild = client.cache.get("1152211578834386984");
+        const guild = client.guilds.cache.get("1152211578834386984");
         const userID = task.userId;
         const member = guild.members.cache(userID)
         const userNick = member.globalName;
