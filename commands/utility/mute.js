@@ -12,21 +12,22 @@ module.exports = {
         .setName('뒤주')
         .setDescription('서버 멤버에게 활동 정지를 지급합니다.')
         .addUserOption(option =>
-        option.setName('이름')
-            .setDescription('활동 정지를 지급할 멤버')
-            .setRequired(true)
+            option.setName('이름')
+                .setDescription('활동 정지를 지급할 멤버')
+                .setRequired(true)
         )
         .addStringOption(option =>
-			option.setName('기한')
-				.setDescription('활동 정지 기간')
-				.setRequired(true)
-				.addChoices(
-					{ name: '1주일', value: '604800' },
-					{ name: '1일', value: '86400' },
-					{ name: '6시간', value: '21600' },
-					{ name: '1시간', value: '3600' },
-					{ name: '30분', value: '1800' },
-				))
+            option.setName('기한')
+                .setDescription('활동 정지 기간')
+                .setRequired(true)
+                .addChoices(
+                    { name: '1주일', value: '604800' },
+                    { name: '1일', value: '86400' },
+                    { name: '6시간', value: '21600' },
+                    { name: '1시간', value: '3600' },
+                    { name: '30분', value: '1800' },
+                    { name: '10초', value: '10' },
+                ))
         .addStringOption(option =>
             option.setName('사유')
                 .setDescription('활동 정지를 부여한 이유')
@@ -61,54 +62,59 @@ module.exports = {
             await interaction.rReply('해당 유저는 이미 활동 정지 상태입니다.');
             return;
         }
-        await interaction.deferReply();
-        const userID = targetUser.id;
-        const userNick = targetUser.globalName;
-        const muteReason = interaction.options.getString('사유') || '없음';
-        const avatarURL = targetUser.displayAvatarURL();
-        const mutedTime = Math.floor(Date.now() / 1000);
-        const channel = interaction.guild.channels.cache.get('1228984653994659931');
-        const muteDur = Number(interaction.options.getString('기한'));
-        const muteEnd = mutedTime + muteDur;
-        const newSchedule = {
-            id: uuidv4(),
-            unixTime: muteEnd,
-            userId: userID
-        };
-        const schedules = await loadSchedules();
-        schedules.push(newSchedule);
-        fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
-        await userNameData.roles.add('1220326194231119974');
-        await scheduleTask(newSchedule);
-        const saEmbed = new EmbedBuilder()
-        .setColor('#330804')
-        .setTitle('활동 정지')
-        .setAuthor({
-            name: `${userNick}`,
-            iconURL: `${avatarURL}`
-        })
-        .addFields(
-            { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
-            { name: '멤버', value: `<@${userID}>`, inline: true },
-            { name: '관리자', value: `<@${adminID}>`, inline: true }
-        )
-        .addFields(
-            { name: '사유', value: muteReason},
-            { name: '만료', value: `<t:${muteEnd}:R>`, inline: true },
-        )
-        await channel.send({ embeds: [saEmbed] });
-        await interaction.editReply(`${userNick}에게 활동 정지를 부여했습니다.`);
         try {
-            await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지를 부여받았습니다.`); 
-        } catch (error) {
-            switch (error.code) {
-                case 50007:
-                    await interaction.followUp({ content: '해당 유저의 DM이 허용되지 않아 알림을 전송할 수 없었습니다.', ephemeral: true });
-                    break;
-                default:
-                    throw error;
+            await interaction.deferReply();
+            const userID = targetUser.id;
+            const userNick = targetUser.globalName;
+            const muteReason = interaction.options.getString('사유') || '없음';
+            const avatarURL = targetUser.displayAvatarURL();
+            const mutedTime = Math.floor(Date.now() / 1000);
+            const channel = interaction.guild.channels.cache.get('1228984653994659931');
+            const muteDur = Number(interaction.options.getString('기한'));
+            const muteEnd = mutedTime + muteDur;
+            const newSchedule = {
+                id: uuidv4(),
+                unixTime: muteEnd,
+                userId: userID
+            };
+            const schedules = await loadSchedules();
+            schedules.push(newSchedule);
+            fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
+            await userNameData.roles.add('1220326194231119974');
+            await scheduleTask(newSchedule);
+            const saEmbed = new EmbedBuilder()
+                .setColor('#330804')
+                .setTitle('활동 정지')
+                .setAuthor({
+                    name: `${userNick}`,
+                    iconURL: `${avatarURL}`
+                })
+                .addFields(
+                    { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
+                    { name: '멤버', value: `<@${userID}>`, inline: true },
+                    { name: '관리자', value: `<@${adminID}>`, inline: true }
+                )
+                .addFields(
+                    { name: '사유', value: muteReason },
+                    { name: '만료', value: `<t:${muteEnd}:R>`, inline: true },
+                )
+            await channel.send({ embeds: [saEmbed] });
+            await interaction.editReply(`${userNick}에게 활동 정지를 부여했습니다.`);
+            try {
+                await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지를 부여받았습니다.`);
+            } catch (innerError) {
+                switch (innerError.code) {
+                    case 50007:
+                        await interaction.followUp({ content: '해당 유저의 DM이 허용되지 않아 알림을 전송할 수 없었습니다.', ephemeral: true });
+                        break;
+                    default:
+                        throw error;
+                }
             }
+        } catch (error) {
+            throw error;
         }
+
     },
 };
 async function loadSchedules() {
@@ -131,33 +137,33 @@ async function unmute(task) {
         const mutedTime = Math.floor(Date.now() / 1000);
         await member.roles.remove("1250084959637602375")
         const unmuteEmbed = new EmbedBuilder()
-        .setColor('#ffd400')
-        .setTitle('활동 정지 해제')
-        .setAuthor({
-            name: `${userNick}`,
-            iconURL: `${avatarURL}`
-        })
-        .addFields(
-            { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
-            { name: '멤버', value: `<@${userID}>`, inline: true },
-            { name: '관리자', value: `*자동*`, inline: true }
-        )
-        .addFields(
-            { name: '사유', value: `*기한 만료*`},
-        )
+            .setColor('#ffd400')
+            .setTitle('활동 정지 해제')
+            .setAuthor({
+                name: `${userNick}`,
+                iconURL: `${avatarURL}`
+            })
+            .addFields(
+                { name: '시간', value: `<t:${mutedTime}:f>`, inline: true },
+                { name: '멤버', value: `<@${userID}>`, inline: true },
+                { name: '관리자', value: `*자동*`, inline: true }
+            )
+            .addFields(
+                { name: '사유', value: `*기한 만료*` },
+            )
         const channel = guild.channels.cache.get('1228984653994659931');
         await channel.send({ embeds: [unmuteEmbed] });
-     } catch (error) {
+    } catch (error) {
         switch (error.code) {
             case 10007:
-            return;
-        default:
-            throw error;
+                return;
+            default:
+                throw error;
         }
     }
 }
 async function scheduleTask(task) {
-    const currentTime = Math.floor(Date.now()/1000);
+    const currentTime = Math.floor(Date.now() / 1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
         const timeoutMap = await loadTimeout();

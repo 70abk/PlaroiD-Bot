@@ -21,35 +21,35 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
+        const targetUser = interaction.options.getUser('이름');
+        const adminID = interaction.user.id;
+        const admin = interaction.guild.members.cache.get(adminID);
+        const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
+        if (adminRoles.size === 0) {
+            await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
+            return;
+        }
+        const allRoleIDs = [
+            '1152216050478350416',
+            '1220243484779352064',
+            '1286693691968192622',
+        ];
+        const userNameData = await interaction.guild.members.fetch(targetUser.id);
+        if (targetUser.bot) {
+            await interaction.reply('올바른 서버 멤버가 아닙니다.');
+            return;
+        }
+        for (const item of allRoleIDs) {
+            if (userNameData.roles.cache.has(item)) {
+                await interaction.reply('관리자는 대상으로 지정할 수 없습니다.');
+                return;
+            }
+        }
+        if (!userNameData.roles.cache.has('1220326194231119974')) {
+            await interaction.reply('해당 유저는 활동 정지 상태가 아닙니다.');
+            return;
+        }
         try {
-            const allRoleIDs = [
-                '1152216050478350416',
-                '1220243484779352064',
-                '1286693691968192622',
-            ];
-            const adminID = interaction.user.id;
-            const admin = interaction.guild.members.cache.get(adminID);
-            const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
-            if (adminRoles.size === 0) {
-                await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
-                return;
-            }
-            const targetUser = interaction.options.getUser('이름');
-            const userNameData = await interaction.guild.members.fetch(targetUser.id);
-            if (targetUser.bot) {
-                await interaction.reply('올바른 서버 멤버가 아닙니다.');
-                return;
-            }
-            for (const item of allRoleIDs) {
-                if (userNameData.roles.cache.has(item)) {
-                    await interaction.reply('관리자는 대상으로 지정할 수 없습니다.');
-                    return;
-                }
-            }
-            if (!userNameData.roles.cache.has('1220326194231119974')) {
-                await interaction.reply('해당 유저는 활동 정지 상태가 아닙니다.');
-                return;
-            }
             await interaction.deferReply();
             const userID = targetUser.id;
             const userNick = targetUser.globalName;
@@ -77,19 +77,19 @@ module.exports = {
             )
             await channel.send({ embeds: [unmuteEmbed] });
             await interaction.editReply(`${userNick}에게 활동 정지를 해제했습니다.`);
+            try {
+                await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지가 해제되었습니다.`); 
+            } catch (innerError) {
+                switch (innerError.code) {
+                    case 50007:
+                        await interaction.followUp({ content: '해당 유저의 DM이 허용되지 않아 알림을 전송할 수 없었습니다.', ephemeral: true });
+                        break;
+                    default:
+                        throw error;
+                }
+            }
         } catch (error) {
             throw error;
-        }
-        try {
-            await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지가 해제되었습니다.`); 
-        } catch (error) {
-            switch (error.code) {
-                case 50007:
-                    await interaction.followUp({ content: '해당 유저의 DM이 허용되지 않아 알림을 전송할 수 없었습니다.', ephemeral: true });
-                    break;
-                default:
-                    throw error;
-            }
         }
     },
 };
