@@ -24,16 +24,16 @@ module.exports = {
         const targetUser = interaction.options.getUser('이름');
         const adminID = interaction.user.id;
         const admin = interaction.guild.members.cache.get(adminID);
-        const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
-        if (adminRoles.size === 0) {
-            await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
-            return;
-        }
         const allRoleIDs = [
             '1152216050478350416',
             '1220243484779352064',
             '1286693691968192622',
         ];
+        const adminRoles = admin.roles.cache.filter(role => allRoleIDs.includes(role.id));
+        if (adminRoles.size === 0) {
+            await interaction.reply('이 명령어는 Staff 이상의 권한이 필요합니다.');
+            return;
+        }
         const userNameData = await interaction.guild.members.fetch(targetUser.id);
         if (targetUser.bot) {
             await interaction.reply('올바른 서버 멤버가 아닙니다.');
