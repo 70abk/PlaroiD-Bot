@@ -21,6 +21,7 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
+        await interaction.guild.members.fetch();
         const targetUser = interaction.options.getUser('이름');
         const adminID = interaction.user.id;
         const admin = interaction.guild.members.cache.get(adminID);
@@ -57,8 +58,13 @@ module.exports = {
             const avatarURL = targetUser.displayAvatarURL();
             const mutedTime = Math.floor(Date.now() / 1000);
             const channel = interaction.guild.channels.cache.get('1228984653994659931');
-            const schedules = await loadSchedules();
-            await scheduleTask(schedules)
+            const timeoutMap = await loadTimeout();
+            const timeoutKey = timeoutMap.get(userID);
+            clearTimeout(timeoutKey);
+            timeoutMap.delete(userID);
+            const schedules = (await loadSchedules()).filter(s => s.id !== userID);
+            await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
+            await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
             await userNameData.roles.remove('1220326194231119974');
             const unmuteEmbed = new EmbedBuilder()
             .setColor('#ffd400')
@@ -78,7 +84,7 @@ module.exports = {
             await channel.send({ embeds: [unmuteEmbed] });
             await interaction.editReply(`${userNick}에게 활동 정지를 해제했습니다.`);
             try {
-                await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지가 해제되었습니다.`); 
+                await targetUser.send(`<@${userID}> "${muteReason}" 사유로 활동 정지가 해제되었습니다.`);
             } catch (innerError) {
                 switch (innerError.code) {
                     case 50007:
@@ -97,23 +103,11 @@ async function loadSchedules() {
     try {
         await fs.promises.access(SCHEDULE_FILE, fs.constants.F_OK)
         const data = await fs.promises.readFile(SCHEDULE_FILE, 'utf8');
-        console.log(data)
         return JSON.parse(data);
     } catch (error) {
         console.error(error);
         return [];
     }
-}
-async function scheduleTask(task) {
-    const userID = task.userId;
-    const timeoutMap = await loadTimeout();
-    const timeoutKey = timeoutMap.get(userID);
-    clearTimeout(timeoutKey);
-    timeoutMap.delete(userID);
-    const b4schedules = await loadSchedules()
-    const schedules = b4schedules.filter(s => s.id !== task.id);
-    await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
-    await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
 }
 async function loadTimeout() {
     try {

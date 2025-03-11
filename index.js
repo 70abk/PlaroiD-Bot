@@ -122,7 +122,7 @@ async function unmute(task) {
         const userID = task.userId;
         const member = await guild.members.fetch(userID);
         await member.roles.remove("1220326194231119974");
-        const userNick = member.globalName;
+        const userNick = member.displayName;
         const avatarURL = member.displayAvatarURL();
         const mutedTime = Math.floor(Date.now() / 1000);
         const unmuteEmbed = new EmbedBuilder()
@@ -142,12 +142,12 @@ async function unmute(task) {
             );
         const channel = guild.channels.cache.get('1228984653994659931');
         await channel.send({ embeds: [unmuteEmbed] });
-    } catch (error) {
+    } catch (unmuteError) {
         switch (error.code) {
             case 10007:
                 return;
             default:
-                indexError(error, "auto-unmute")
+                indexError(unmuteError, "auto-unmute")
                 break;
         }
     }
@@ -160,14 +160,13 @@ async function scheduleTask(task) {
         const timeoutMap = new Map();
         const tID = setTimeout(async () => {
             await unmute(task);
-            const schedules = await loadSchedules().filter(s => s.id !== task.id);
+            const schedules = (await loadSchedules()).filter(s => s.id !== task.id);
             await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
         }, delay);
         timeoutMap.set(task.userId, tID[Symbol.toPrimitive]('number'));
         await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
     } else {
-        const b4schedules = await loadSchedules()
-        const schedules = b4schedules.filter(s => s.id !== task.id);
+        const schedules = (await loadSchedules()).filter(s => s.id !== task.id);
         await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2))
         await unmute(task);
     }
@@ -204,5 +203,3 @@ async function indexError(error, msg) {
 }
 
 client.login(token);
-
-module.exports = client;

@@ -34,6 +34,7 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
+        await interaction.guild.members.fetch();
         const client = interaction.client;
         const allRoleIDs = [
             '1152216050478350416',
@@ -109,7 +110,9 @@ module.exports = {
                         const channel = guild.channels.cache.get('1228984653994659931');
                         await channel.send({ embeds: [unmuteEmbed] });
                         schedules = schedules.filter(s => s.id !== newSchedule.id);
+                        timeoutMap.delete(newSchedule.userId);
                         await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
+                        await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
                     } catch (unmuteError) {
                         throw unmuteError;
                     }
@@ -120,7 +123,11 @@ module.exports = {
                 const schedules = await loadSchedules();
                 const updatedSchedules = schedules.filter(s => s.id !== newSchedule.id);
                 await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(updatedSchedules, null, 2));
-                await unmute(newSchedule, interaction.guild);
+                schedules = schedules.filter(s => s.id !== newSchedule.id);
+                timeoutMap.delete(newSchedule.userId);
+                await fs.promises.writeFile(SCHEDULE_FILE, JSON.stringify(schedules, null, 2), 'utf8');
+                await fs.promises.writeFile(TIMEOUT_FILE, JSON.stringify(Object.fromEntries(timeoutMap)));
+                console.log("WARNING: Mute delay was lower than 0");
             }
             const saEmbed = new EmbedBuilder()
                 .setColor('#330804')
