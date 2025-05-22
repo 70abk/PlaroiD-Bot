@@ -12,6 +12,7 @@ TIMEOUT_FILE - 해방시 취소할 뒤주 목록 저장파일 경로 (timeouts.j
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const cron = require('node-cron');
+const axios = require('axios');
 const fs = require('node:fs');
 const path = require('node:path');
 const config = require(path.join(__dirname, './config.json'));
@@ -28,13 +29,13 @@ const client = new Client({
 });
 // fs 경로 설정
 if (!fs.existsSync('logs')) {
-	fs.mkdirSync('logs');
+    fs.mkdirSync('logs');
 }
 if (!fs.existsSync('data')) {
-	fs.mkdirSync('data');
+    fs.mkdirSync('data');
 }
 if (!fs.existsSync(SCHEDULE_FILE)) {
-	fs.writeFileSync(SCHEDULE_FILE, '[]', 'utf8');
+    fs.writeFileSync(SCHEDULE_FILE, '[]', 'utf8');
 }
 
 // 명령어 불러오기
@@ -85,10 +86,10 @@ client.on(Events.InteractionCreate, async interaction => {
         await command.execute(interaction);
     } catch (error) {
         try {
-			if (!interaction) {
-				console.error(`"${command.data.name}" 명령어 실행 중 interaction이 유효하지 않거나 요청이 만료되었습니다!`);
-				return;
-			}
+            if (!interaction) {
+                console.error(`"${command.data.name}" 명령어 실행 중 interaction이 유효하지 않거나 요청이 만료되었습니다!`);
+                return;
+            }
             await logError(error, interaction);
         } catch (innerError) {
             console.log("Error occured while sending error message. This may be internet issue.");
@@ -103,6 +104,62 @@ client.on(Events.InteractionCreate, async interaction => {
 // 서버에 사람이 들어올 시 실행할 코드
 client.on('guildMemberAdd', async member => {
     return;
+});
+
+client.on('messageCreate', async (message) => {
+    const prefix = '캣!';
+    if (message.author.bot || !message.content.startsWith(prefix)) return;
+
+    const content = message.content.slice(prefix.length).replace(/\s+/g, '');
+    const response = await axios.post('http://localhost:5000/similarity', {
+        sentence: content,
+    });
+
+    const data = response.data;
+    const score = parseFloat(data.score.toFixed(2));
+    if (score < 0.6) {
+        message.reply({
+            content: "뭐라고? 뭐라는건지 잘 모르겠어..",
+            allowedMentions: { repliedUser: false }
+        });
+        return;
+    }
+    const intentResponses = {
+        "인사.인사하기": [
+            "왔어? 늦었잖아, 진짜… 뭐, 그래도 반가워.",
+            "하이. 딱히 반갑진 않은데… 아니, 그냥 그렇다고.",
+            "…안녕. 뭘 그렇게 빤히 봐?"
+        ],
+        "질문.일반": [
+            "몰라, 난 지금 일하느라 바쁘단 말야.",
+            "글쎄... 그런건 아직 못 배웠다구."
+        ],
+        "감사.감사하기": [
+            "고맙긴 뭐가 고마워… 어, 뭐, 나도 싫진 않았어.",
+            "에이 진짜… 칭찬받으면 기분 좋잖아… 고, 고마워.",
+            "그런 말, 가끔은… 나쁘지 않네."
+        ],
+        "대답.대답하기": [
+            "흠, 그래. 인정해줄게.",
+            "그, 그 정도는 나도 알아!",
+            "맞아. 그건 인정할게… 어쩔 수 없이."
+        ],
+        "웃음.웃기": [
+            "…뭐야 그 웃음은. 그래도 좀 귀엽긴 하네.",
+            "큭, 웃기긴 하네. 진짜 바보 같아.",
+            "하하… 진짜, 너 웃긴 녀석이야."
+        ]
+    };
+
+    const responses = intentResponses[data.intent];
+    const randomResponse = Array.isArray(responses)
+        ? responses[Math.floor(Math.random() * responses.length)]
+        : responses;
+
+    message.reply({
+        content: randomResponse,
+        allowedMentions: { repliedUser: false }
+    });
 });
 
 // ***** 뒤주/해방 함수 *****
@@ -154,7 +211,7 @@ async function unmute(task) {
 }
 
 async function scheduleTask(task) {
-    const currentTime = Math.floor(Date.now()/1000);
+    const currentTime = Math.floor(Date.now() / 1000);
     const delay = (task.unixTime - currentTime) * 1000;
     if (delay > 0) {
         const timeoutMap = new Map();
@@ -179,12 +236,12 @@ function getTimestamp() {
 }
 
 async function logError(error, interaction) {
-	const cmdname = interaction.commandName
+    const cmdname = interaction.commandName
     let errorMsg = `${error.name}"오류가 발생했습니다! 문제가 지속되면 관리자에게 문의해주세요.`;
     if (error.code) {
         errorMsg += ` 오류 코드: ${error.code}`;
-    } 
-	console.error(`"${cmdname}" 명령어 실행 중 ${error.name} 오류가 발생했습니다!`);
+    }
+    console.error(`"${cmdname}" 명령어 실행 중 ${error.name} 오류가 발생했습니다!`);
     if (interaction.replied || interaction.deferred) {
         await interaction.followUp({ content: errorMsg, ephemeral: true });
     }
