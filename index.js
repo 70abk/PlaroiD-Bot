@@ -19,6 +19,7 @@ const config = require(path.join(__dirname, './config.json'));
 const token = config.token;
 const SCHEDULE_FILE = path.join(__dirname, config.scheduleIndex);
 const TIMEOUT_FILE = path.join(__dirname, config.timeoutIndex);
+const responsefilePath = path.join(__dirname, config.responseIndex);
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -109,7 +110,6 @@ client.on('guildMemberAdd', async member => {
 client.on('messageCreate', async (message) => {
     const prefix = '캣!';
     if (message.author.bot || !message.content.startsWith(prefix)) return;
-
     const content = message.content.slice(prefix.length).replace(/\s+/g, '');
     const response = await axios.post('http://localhost:5000/similarity', {
         sentence: content,
@@ -124,40 +124,14 @@ client.on('messageCreate', async (message) => {
         });
         return;
     }
-    const intentResponses = {
-        "인사.인사하기": [
-            "왔어? 늦었잖아, 진짜… 뭐, 그래도 반가워.",
-            "하이. 딱히 반갑진 않은데… 아니, 그냥 그렇다고.",
-            "…안녕. 뭘 그렇게 빤히 봐?"
-        ],
-        "질문.일반": [
-            "몰라, 난 지금 일하느라 바쁘단 말야.",
-            "글쎄... 그런건 아직 못 배웠다구."
-        ],
-        "감사.감사하기": [
-            "고맙긴 뭐가 고마워… 어, 뭐, 나도 싫진 않았어.",
-            "에이 진짜… 칭찬받으면 기분 좋잖아… 고, 고마워.",
-            "그런 말, 가끔은… 나쁘지 않네."
-        ],
-        "대답.대답하기": [
-            "흠, 그래. 인정해줄게.",
-            "그, 그 정도는 나도 알아!",
-            "맞아. 그건 인정할게… 어쩔 수 없이."
-        ],
-        "웃음.웃기": [
-            "…뭐야 그 웃음은. 그래도 좀 귀엽긴 하네.",
-            "큭, 웃기긴 하네. 진짜 바보 같아.",
-            "하하… 진짜, 너 웃긴 녀석이야."
-        ]
-    };
-
+    const responseData = fs.readFileSync(responsefilePath, 'utf-8');
+    const intentResponses = JSON.parse(responseData);
     const responses = intentResponses[data.intent];
     const randomResponse = Array.isArray(responses)
         ? responses[Math.floor(Math.random() * responses.length)]
         : responses;
-
     message.reply({
-        content: randomResponse,
+        content: randomResponse || "무슨 말인지 잘 모르겠어.",
         allowedMentions: { repliedUser: false }
     });
 });
