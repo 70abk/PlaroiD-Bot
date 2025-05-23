@@ -20,6 +20,12 @@ const token = config.token;
 const SCHEDULE_FILE = path.join(__dirname, config.scheduleIndex);
 const TIMEOUT_FILE = path.join(__dirname, config.timeoutIndex);
 const responsefilePath = path.join(__dirname, config.responseIndex);
+const badwords = new Set(
+    fs.readFileSync(path.join(__dirname, config.badwordIndex), 'utf-8')
+        .split('\n')
+        .map(w => w.trim())
+        .filter(Boolean)
+);
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -111,10 +117,18 @@ client.on('messageCreate', async (message) => {
     const prefix = '캣!';
     if (message.author.bot || !message.content.startsWith(prefix)) return;
     const content = message.content.slice(prefix.length).replace(/\s+/g, '');
+    for (const word of badwords) {
+        if (content.includes(word)) {
+            message.reply({
+                content: "야! 너 방금 욕한거니? 아니지?",
+                allowedMentions: { repliedUser: false }
+            });
+            return;
+        }
+    }
     const response = await axios.post('http://localhost:5000/similarity', {
         sentence: content,
     });
-
     const data = response.data;
     const score = parseFloat(data.score.toFixed(2));
     if (score < 0.6) {
